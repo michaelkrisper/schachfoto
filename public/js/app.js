@@ -6,8 +6,10 @@ import {
   START_PLACEMENT,
   boardToPlacement,
   buildFen,
+  canAdd,
   defaultCastling,
   formatScore,
+  placeProblem,
   placementProblem,
   placementToBoard,
   rotateBoard,
@@ -35,7 +37,6 @@ const state = {
   // Play mode: the game, earlier positions for undo, and the tap/drag selection.
   game: null,
   past: [],
-  startTurn: 'w',
   lastMove: null,
   pick: null,
   targets: [],
@@ -121,6 +122,7 @@ function render() {
   }
   for (const btn of $('#palette').children) {
     btn.setAttribute('aria-checked', String(btn.dataset.piece === state.selected));
+    btn.classList.toggle('used-up', !canAdd(state.board, btn.dataset.piece));
   }
 }
 
@@ -151,6 +153,11 @@ function buildPalette() {
 
 function tapSquare(index) {
   const piece = state.board[index] === state.selected ? '' : state.selected;
+  const problem = placeProblem(state.board, index, piece);
+  if (problem) {
+    setError($('#error'), problem);
+    return;
+  }
   state.board[index] = piece;
   state.marked = state.marked.filter((sq) => sq !== squareName(index));
   setError($('#error'), null);
@@ -239,17 +246,14 @@ function toGerman(san) {
   return san.replace(/[NBRQ]/g, (p) => GERMAN_PIECES[p]);
 }
 
-function pvToSan(fen, pv) {
-  const chess = new Chess(fen);
-  const out = [];
-  for (const uci of pv.slice(0, 8)) {
-    try {
-      out.push(toGerman(chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }).san));
-    } catch {
-      break;
-    }
+function moveToSan(fen, uci) {
+  try {
+    return toGerman(
+      new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }).san,
+    );
+  } catch {
+    return null;
   }
-  return out;
 }
 
 function positionProblem(fen) {
@@ -283,27 +287,10 @@ function gameResult() {
   return null;
 }
 
-function historyText() {
-  const parts = [];
-  let number = 1;
-  let white = state.startTurn === 'w';
-  if (!white && state.past.length) parts.push('1…');
-  for (const { san } of state.past) {
-    if (white) parts.push(`${number}.`);
-    parts.push(san);
-    if (!white) number++;
-    white = !white;
-  }
-  return parts.join(' ');
-}
-
 function renderPlayInfo() {
   const result = gameResult();
   const side = state.game.turn() === 'w' ? 'Weiß' : 'Schwarz';
   $('#status').textContent = result ?? `${side} am Zug${state.game.isCheck() ? ' – Schach!' : ''}`;
-  const moves = $('#moves');
-  moves.textContent = historyText() || 'Ziehe per Drag & Drop, Antippen oder über einen Vorschlag.';
-  moves.scrollLeft = moves.scrollWidth;
   $('#btn-undo').disabled = !state.past.length;
   $('#btn-pass').disabled = Boolean(result);
 }
@@ -313,18 +300,16 @@ function renderLines(fen, lines) {
   const list = $('#lines');
   list.replaceChildren();
   for (const line of lines) {
-    const san = pvToSan(fen, line.pv);
+    const san = moveToSan(fen, line.pv[0]);
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'line';
     const move = document.createElement('strong');
-    move.textContent = san[0] ?? line.pv[0];
+    move.textContent = san ?? line.pv[0];
     const score = document.createElement('span');
     score.className = 'score';
     score.textContent = formatScore(line.score, state.turn);
-    const cont = document.createElement('small');
-    cont.textContent = san.slice(1).join(' ');
-    btn.append(move, score, cont);
+    btn.append(move, score);
     const uci = line.pv[0];
     btn.addEventListener('click', () =>
       playMove({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }),
@@ -373,7 +358,6 @@ function startPlay() {
   }
   state.game = new Chess(fen);
   state.past = [];
-  state.startTurn = state.turn;
   state.lastMove = null;
   clearPick();
   state.mode = 'analysis';
@@ -415,7 +399,7 @@ function playMove(move) {
     render();
     return;
   }
-  state.past.push({ fen: before, san: toGerman(result.san), squares: [result.from, result.to] });
+  state.past.push({ fen: before, squares: [result.from, result.to] });
   state.lastMove = [result.from, result.to];
   afterChange();
 }
@@ -437,7 +421,7 @@ function passTurn() {
   const parts = state.game.fen().split(' ');
   parts[1] = parts[1] === 'w' ? 'b' : 'w';
   parts[3] = '-';
-  state.past.push({ fen: state.game.fen(), san: '–', squares: null });
+  state.past.push({ fen: state.game.fen(), squares: null });
   state.game = new Chess(parts.join(' '));
   state.lastMove = null;
   afterChange();

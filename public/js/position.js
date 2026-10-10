@@ -90,11 +90,46 @@ export function defaultCastling(board) {
   return rights;
 }
 
+const START_COUNTS = { q: 1, r: 2, b: 2, n: 2 };
+
+// A side has one king and at most eight pawns; every piece beyond the starting
+// set must be a promoted pawn. That also caps a side at 16 pieces.
+export function exceedsLimits(board, white) {
+  const count = (p) => board.filter((c) => c === (white ? p.toUpperCase() : p)).length;
+  if (count('k') > 1) return true;
+  const promoted = Object.entries(START_COUNTS).reduce((sum, [p, n]) => sum + Math.max(0, count(p) - n), 0);
+  return count('p') + promoted > 8;
+}
+
+export function isWhite(piece) {
+  return piece === piece.toUpperCase();
+}
+
+// Whether one more `piece` fits on the board without breaking the limits.
+export function canAdd(board, piece) {
+  return !piece || !exceedsLimits([...board, piece], isWhite(piece));
+}
+
+// German reason why `piece` ('' = empty) may not go on `index`, else null.
+export function placeProblem(board, index, piece) {
+  if (!piece) return null;
+  if ((piece === 'P' || piece === 'p') && (index < 8 || index >= 56)) {
+    return 'Bauern können nicht auf der 1. oder 8. Reihe stehen.';
+  }
+  const next = [...board];
+  next[index] = piece;
+  if (!exceedsLimits(next, isWhite(piece))) return null;
+  if (piece.toLowerCase() === 'k') return 'Es gibt nur einen König pro Seite.';
+  return `Mehr geht nicht: ${isWhite(piece) ? 'Weiß' : 'Schwarz'} hätte sonst mehr Figuren, als im Spiel möglich sind.`;
+}
+
 // Returns a German message for positions the engine cannot analyse, else null.
 export function placementProblem(board) {
   const count = (p) => board.filter((c) => c === p).length;
   if (count('K') !== 1) return 'Weiß braucht genau einen König.';
   if (count('k') !== 1) return 'Schwarz braucht genau einen König.';
+  if (exceedsLimits(board, true)) return 'Weiß hat mehr Figuren, als im Spiel möglich sind.';
+  if (exceedsLimits(board, false)) return 'Schwarz hat mehr Figuren, als im Spiel möglich sind.';
   const backRanks = [...board.slice(0, 8), ...board.slice(56)];
   if (backRanks.some((c) => c === 'P' || c === 'p'))
     return 'Bauern dürfen nicht auf der 1. oder 8. Reihe stehen.';

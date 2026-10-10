@@ -15,14 +15,17 @@ Eine PWA für Android und iPhone auf Cloudflare Pages:
    ein eigenes Kontingent. Liest das Modell ein Foto von der schwarzen Seite
    kopfüber, dreht `orientByPawns` die Stellung anhand der Bauern zurück.
 3. **Prüfen:** Die erkannte Stellung lässt sich auf dem Brett korrigieren,
-   unsichere Felder sind gelb markiert. Wer am Zug ist und welche Rochaden noch
+   unsichere Felder sind gelb markiert. Der Editor lässt nur Stellungen zu, die
+   in einer Partie vorkommen können: ein König pro Seite, höchstens acht
+   Bauern, und jede Figur über den Grundbestand hinaus kostet einen Bauern. Wer am Zug ist und welche Rochaden noch
    erlaubt sind, sieht man auf einem Foto nicht, das wählst du selbst.
 4. **Züge:** Stockfish 19 (lite, single-threaded, WASM) rechnet im Browser die
    drei besten Züge mit Bewertung und Fortsetzung. Das funktioniert offline und
    braucht keine Cross-Origin-Isolation, läuft also auch auf iOS.
 5. **Weiterspielen:** Züge per Drag & Drop, durch Antippen von Figur und
    Zielfeld oder durch Antippen eines Vorschlags. Die Seiten wechseln sich ab,
-   nach jedem Zug rechnet Stockfish neu. Dazu gibt es Zurück, Spieler wechseln
+   nach jedem Zug rechnet Stockfish neu. Angezeigt werden nur die Vorschläge
+   mit Bewertung, keine Zugliste. Dazu gibt es Zurück, Spieler wechseln
    (die andere Seite ist am Zug) und Brett drehen.
 
 Im Free Tier darf Google die hochgeladenen Fotos zum Training verwenden.

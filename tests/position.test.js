@@ -5,10 +5,12 @@ import {
   START_PLACEMENT,
   boardToPlacement,
   buildFen,
+  canAdd,
   defaultCastling,
   formatScore,
   orientByPawns,
   parseRanks,
+  placeProblem,
   placementProblem,
   placementToBoard,
   rotateBoard,
@@ -90,4 +92,21 @@ test('orientByPawns turns a board read from black side', () => {
     boardToPlacement(orientByPawns(placementToBoard('4k3/8/8/8/8/8/8/4K3'))),
     '4k3/8/8/8/8/8/8/4K3',
   );
+});
+
+test('piece limits follow what a real game allows', () => {
+  const start = placementToBoard(START_PLACEMENT);
+  assert.equal(canAdd(start, 'Q'), false);
+  assert.equal(canAdd(start, 'k'), false);
+  assert.equal(canAdd(start, ''), true);
+  // Without one white pawn, a second queen is possible (promotion).
+  const noPawn = placementToBoard('rnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR');
+  assert.equal(canAdd(noPawn, 'Q'), true);
+  assert.equal(canAdd(noPawn, 'q'), false);
+  assert.match(placeProblem(start, squareIndex('e4'), 'N'), /Weiß/);
+  assert.match(placeProblem(noPawn, squareIndex('a8'), 'P'), /Bauern/);
+  assert.match(placeProblem(start, squareIndex('e4'), 'K'), /König/);
+  // Replacing a pawn by a second queen is a promotion, so it fits.
+  assert.equal(placeProblem(start, squareIndex('e2'), 'Q'), null);
+  assert.match(placementProblem(placementToBoard('QQQQkQQQ/QQQ5/8/8/8/8/8/4K3')), /Weiß hat mehr/);
 });

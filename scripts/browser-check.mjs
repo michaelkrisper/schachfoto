@@ -1,7 +1,7 @@
 /**
  * Smoke test in headless Chrome on a phone-sized viewport: builds a position by
  * hand, lets the engine run, then plays moves via suggestion, drag & drop and
- * tap-tap, undoes one and passes. Also checks that the page never scrolls.
+ * tap-tap (checked via the last-move markers), undoes one and passes. Also checks that the page never scrolls.
  * Needs `npm run dev` (or pass a deployed URL).
  *
  *   node scripts/browser-check.mjs [http://localhost:8793] [screenshot.png]
@@ -77,6 +77,18 @@ try {
     sq('e4').click();
     document.querySelector('[data-turn="b"]').click();
   })()`);
+  // With all pawns on the board, a second white queen is impossible.
+  const limit = await evaluate(`(() => {
+    const queen = document.querySelector('[data-piece="Q"]');
+    queen.click();
+    document.querySelector('#board [aria-label^="e5"]').click();
+    return {
+      usedUp: queen.classList.contains('used-up'),
+      placed: document.querySelector('#board [aria-label^="e5"]').getAttribute('aria-label') !== 'e5',
+      error: document.querySelector('#error').textContent,
+    };
+  })()`);
+  await evaluate(`document.querySelector('[data-piece="P"]').click()`);
   const editScrolls = await evaluate(
     `document.documentElement.scrollHeight > innerHeight || document.body.scrollHeight > innerHeight`,
   );
@@ -91,7 +103,7 @@ try {
       lines: document.querySelectorAll('#lines .line').length,
       arrows: document.querySelectorAll('#board .arrows g').length,
       status: document.querySelector('#status').textContent,
-      moves: document.querySelector('#moves').textContent,
+      last: [...document.querySelectorAll('#board .sq.last')].map((el) => el.getAttribute('aria-label')).join(' '),
       scrolls: document.documentElement.scrollHeight > innerHeight || document.body.scrollHeight > innerHeight,
     })`);
   const center = (sq) =>
@@ -114,7 +126,7 @@ try {
     await mouse('mouseReleased', p);
   };
 
-  const steps = {};
+  const steps = { limit };
   steps.analysed = await state();
   await evaluate(`document.querySelector('#lines .line').click()`);
   await wait(300);
@@ -137,14 +149,17 @@ try {
     const png = await send('Page.captureScreenshot', { format: 'png' });
     writeFileSync(shot, Buffer.from(png.result.data, 'base64'));
   }
-  const all = Object.values(steps);
+  const all = Object.values(steps).filter((st) => 'scrolls' in st);
   ok =
+    limit.usedUp &&
+    !limit.placed &&
+    limit.error.length > 0 &&
     steps.analysed.lines === 3 &&
     steps.analysed.arrows === 3 &&
     steps.suggestion.status.startsWith('Weiß') &&
-    steps.drag.moves.includes('Sf3') &&
-    steps.tap.moves.includes('Sc6') &&
-    !steps.undo.moves.includes('Sc6') &&
+    steps.drag.last.includes('f3 N') &&
+    steps.tap.last.includes('c6 n') &&
+    steps.undo.last.includes('f3 N') &&
     steps.pass.status.startsWith('Weiß') &&
     steps.pass.lines === 3 &&
     !editScrolls &&
