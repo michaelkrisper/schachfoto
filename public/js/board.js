@@ -7,34 +7,54 @@ export function pieceSrc(piece) {
   return `/pieces/${color}${piece.toUpperCase()}.svg`;
 }
 
+function coord(kind, text) {
+  const span = document.createElement('span');
+  span.className = `coord ${kind}`;
+  span.textContent = text;
+  span.setAttribute('aria-hidden', 'true');
+  return span;
+}
+
+function renderSquare(index, opts) {
+  const { board, marked = [], onSquare, pick = null, targets = [], lastMove = null, dragFrom = null } = opts;
+  const sq = document.createElement('button');
+  sq.type = 'button';
+  const name = squareName(index);
+  const piece = board[index];
+  sq.className = `sq ${((index % 8) + Math.floor(index / 8)) % 2 ? 'dark' : 'light'}`;
+  sq.dataset.index = index;
+  sq.classList.toggle('marked', marked.includes(name));
+  sq.classList.toggle('last', Boolean(lastMove?.includes(name)));
+  sq.classList.toggle('picked', index === pick);
+  if (targets.includes(index)) sq.classList.add(piece ? 'capture' : 'target');
+  sq.setAttribute('aria-label', name + (piece ? ` ${piece}` : ''));
+  // Coordinates sit in the left column and bottom row, whichever side is down.
+  const edgeFile = opts.flipped ? 7 : 0;
+  const edgeRank = opts.flipped ? 0 : 7;
+  if (index % 8 === edgeFile) sq.append(coord('rank', name[1]));
+  if (Math.floor(index / 8) === edgeRank) sq.append(coord('file', name[0]));
+  if (piece) {
+    const img = document.createElement('img');
+    img.src = pieceSrc(piece);
+    img.alt = '';
+    img.draggable = false;
+    img.classList.toggle('lifted', index === dragFrom);
+    sq.append(img);
+  }
+  if (onSquare) sq.addEventListener('click', () => onSquare(index));
+  else sq.tabIndex = -1;
+  return sq;
+}
+
 // Renders an 8x8 board into `root`. `flipped` puts black at the bottom.
-export function renderBoard(root, { board, flipped, marked = [], arrows = [], onSquare }) {
+// Play-mode extras: `pick` (selected square), `targets` (its legal destinations),
+// `lastMove` (two square names) and `dragFrom` (square whose piece is being dragged).
+export function renderBoard(root, opts) {
   root.replaceChildren();
   const order = [...Array(64).keys()];
-  if (flipped) order.reverse();
-
-  for (const index of order) {
-    const sq = document.createElement('button');
-    sq.type = 'button';
-    const file = index % 8;
-    const rank = Math.floor(index / 8);
-    sq.className = `sq ${(file + rank) % 2 ? 'dark' : 'light'}`;
-    const name = squareName(index);
-    if (marked.includes(name)) sq.classList.add('marked');
-    sq.setAttribute('aria-label', name + (board[index] ? ` ${board[index]}` : ''));
-    if (board[index]) {
-      const img = document.createElement('img');
-      img.src = pieceSrc(board[index]);
-      img.alt = '';
-      img.draggable = false;
-      sq.append(img);
-    }
-    if (onSquare) sq.addEventListener('click', () => onSquare(index));
-    else sq.tabIndex = -1;
-    root.append(sq);
-  }
-
-  if (arrows.length) root.append(renderArrows(arrows, flipped));
+  if (opts.flipped) order.reverse();
+  for (const index of order) root.append(renderSquare(index, opts));
+  if (opts.arrows?.length) root.append(renderArrows(opts.arrows, opts.flipped));
 }
 
 function center(name, flipped) {

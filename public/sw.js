@@ -1,6 +1,6 @@
 // Service worker: installable app, and the engine works offline once loaded.
 // Bump VERSION and `activate` sweeps every older cache away.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = `sf-${VERSION}`;
 
 const PIECES = ['K', 'Q', 'R', 'B', 'N', 'P'].flatMap((p) => [`/pieces/w${p}.svg`, `/pieces/b${p}.svg`]);

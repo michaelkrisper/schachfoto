@@ -20,6 +20,10 @@ Eine PWA für Android und iPhone auf Cloudflare Pages:
 4. **Züge:** Stockfish 19 (lite, single-threaded, WASM) rechnet im Browser die
    drei besten Züge mit Bewertung und Fortsetzung. Das funktioniert offline und
    braucht keine Cross-Origin-Isolation, läuft also auch auf iOS.
+5. **Weiterspielen:** Züge per Drag & Drop, durch Antippen von Figur und
+   Zielfeld oder durch Antippen eines Vorschlags. Die Seiten wechseln sich ab,
+   nach jedem Zug rechnet Stockfish neu. Dazu gibt es Zurück, Spieler wechseln
+   (die andere Seite ist am Zug) und Brett drehen.
 
 Im Free Tier darf Google die hochgeladenen Fotos zum Training verwenden.
 
@@ -32,7 +36,7 @@ Im Free Tier darf Google die hochgeladenen Fotos zum Training verwenden.
 | `public/js/engine.js` | UCI-Wrapper um den Stockfish-Worker |
 | `functions/api/recognize.js` | Pages Function: Zugangscode, Gemini-Aufruf, Validierung |
 | `tests/` | `node:test` für Brettlogik, UCI-Parser und die Function (mit gemocktem `fetch`) |
-| `scripts/browser-check.mjs` | Smoke-Test in headless Chrome: Stellung bauen, analysieren, Pfeile prüfen |
+| `scripts/browser-check.mjs` | Smoke-Test in headless Chrome: Stellung bauen, analysieren, per Vorschlag, Drag & Drop und Antippen ziehen, Zurück, Spieler wechseln; prüft auch, dass nichts scrollt (`VIEWPORT=375x667` für kleine Handys) |
 
 ## Entwickeln
 

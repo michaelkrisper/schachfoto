@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#1f2a24" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -45,7 +45,7 @@
 
       <section id="view-board" class="view" hidden>
         <p id="note" class="note" hidden></p>
-        <div id="board" class="board"></div>
+        <div class="board-wrap"><div id="board" class="board"></div></div>
 
         <div id="edit-tools">
           <div id="palette" class="palette" role="radiogroup" aria-label="Figur zum Setzen"></div>
@@ -79,15 +79,30 @@
         </div>
 
         <div id="analysis-tools" hidden>
-          <ol id="lines" class="lines"></ol>
-          <p id="depth" class="hint"></p>
-          <div class="row wrap">
-            <button type="button" id="btn-edit" class="ghost">Stellung bearbeiten</button>
-            <button type="button" id="btn-longer" class="ghost">Länger rechnen</button>
+          <div class="status">
+            <strong id="status"></strong>
+            <span id="depth"></span>
+          </div>
+          <div id="moves" class="moves" aria-label="Gespielte Züge"></div>
+          <p id="play-error" class="error" role="alert" hidden></p>
+          <ol id="lines" class="lines" aria-label="Vorschläge, antippen zum Ziehen"></ol>
+          <div class="toolbar">
+            <button type="button" id="btn-undo">Zurück</button>
+            <button type="button" id="btn-pass">Spieler wechseln</button>
+            <button type="button" id="btn-flip">Brett drehen</button>
+            <button type="button" id="btn-longer">Tiefer rechnen</button>
+            <button type="button" id="btn-edit">Bearbeiten</button>
           </div>
         </div>
       </section>
     </main>
+
+    <dialog id="dlg-promo">
+      <form method="dialog">
+        <h2>Umwandeln in</h2>
+        <div id="promo-pieces" class="promo"></div>
+      </form>
+    </dialog>
 
     <dialog id="dlg-code">
       <form method="dialog">
