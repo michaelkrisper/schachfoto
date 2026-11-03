@@ -2,6 +2,8 @@ import { boardToPlacement, orientByPawns, parseRanks } from '../../public/js/pos
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
+// The Gemini prompt stays in German: it asks for a German `note`, which is shown
+// to the user verbatim, and the prompt wording was tuned against test boards.
 const PROMPT = `Auf dem Foto ist ein Schachbrett (echtes Brett, Bildschirm oder Diagramm).
 Bestimme die Stellung Feld für Feld.
 
