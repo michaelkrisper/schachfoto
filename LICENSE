@@ -19,10 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party files in public/vendor/ and public/pieces/ keep their own licenses:
-- Stockfish (public/vendor/stockfish-*): GPLv3, see public/vendor/STOCKFISH-COPYING.txt
-- chess.js (public/vendor/chess.js): BSD-2-Clause, see public/vendor/CHESSJS-LICENSE.txt
-- Piece set "cburnett" (public/pieces/): CC BY-SA 3.0, Colin M.L. Burnett
