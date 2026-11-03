@@ -2,7 +2,7 @@
   "name": "schachfoto",
   "version": "1.0.0",
   "private": true,
-  "description": "Schachbrett fotografieren, Stellung erkennen lassen, die besten Züge sehen. PWA auf Cloudflare Pages.",
+  "description": "Photograph a chess board, recognise the position and see the best moves. PWA on Cloudflare Pages.",
   "license": "MIT",
   "repository": {
     "type": "git",

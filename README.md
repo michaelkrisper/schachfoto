@@ -1,81 +1,106 @@
 # Schachfoto
 
-Schachbrett fotografieren, Stellung erkennen lassen, die besten Züge sehen.
-Eine PWA für Android und iPhone auf Cloudflare Pages:
-**https://schachfoto.pages.dev**
+Photograph a chess board, get the position recognised, and see the best moves.
 
-## So funktioniert's
+[![CI](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-schachfoto.pages.dev-2ea44f)](https://schachfoto.pages.dev)
 
-1. **Foto:** Das Handy verkleinert das Bild auf 1568 px und schickt es an
-   `functions/api/recognize.js`.
-2. **Erkennung:** Die Funktion fragt Gemini im Free Tier und bekommt die
-   Stellung als acht Reihen-Strings zurück (Structured Output). Sie probiert
-   die Modelle der Reihe nach: 3.6 Flash, 3 Flash Preview, 3.8 Flash. Ist eins
-   überlastet (503) oder am Limit (429), kommt das nächste dran, denn jedes hat
-   ein eigenes Kontingent. Liest das Modell ein Foto von der schwarzen Seite
-   kopfüber, dreht `orientByPawns` die Stellung anhand der Bauern zurück.
-3. **Prüfen:** Die erkannte Stellung lässt sich auf dem Brett korrigieren,
-   unsichere Felder sind gelb markiert. Der Editor lässt nur Stellungen zu, die
-   in einer Partie vorkommen können: ein König pro Seite, höchstens acht
-   Bauern, und jede Figur über den Grundbestand hinaus kostet einen Bauern. Wer am Zug ist und welche Rochaden noch
-   erlaubt sind, sieht man auf einem Foto nicht, das wählst du selbst.
-4. **Züge:** Stockfish 19 (lite, single-threaded, WASM) rechnet im Browser die
-   drei besten Züge mit Bewertung und Fortsetzung. Das funktioniert offline und
-   braucht keine Cross-Origin-Isolation, läuft also auch auf iOS.
-5. **Weiterspielen:** Züge per Drag & Drop, durch Antippen von Figur und
-   Zielfeld oder durch Antippen eines Vorschlags. Die Seiten wechseln sich ab,
-   nach jedem Zug rechnet Stockfish neu. Angezeigt werden nur die Vorschläge
-   mit Bewertung, keine Zugliste. Dazu gibt es Zurück, Spieler wechseln
-   (die andere Seite ist am Zug) und Brett drehen.
+**Live: https://schachfoto.pages.dev**
 
-Im Free Tier darf Google die hochgeladenen Fotos zum Training verwenden.
+A progressive web app for Android and iPhone, hosted on Cloudflare Pages. The
+user interface is in German.
 
-## Aufbau
+<img src="docs/screenshot.png" alt="Analysis view with three suggested moves and arrows on the board" width="320">
 
-| Pfad | Inhalt |
+## Features
+
+- Board recognition from a photo taken from above or at an angle
+- Board editor with uncertain squares highlighted; only positions that can
+  occur in a real game are accepted (one king per side, at most eight pawns,
+  every extra piece costs a pawn)
+- Side to move and castling rights chosen by the user (a photo cannot show them)
+- Stockfish 19 in the browser: the three best moves with evaluation, shown as
+  arrows on the board
+- Keep playing: drag and drop, tap piece and target, or tap a suggestion;
+  undo, switch side to move, flip the board
+- Installable and offline-capable for the engine part (service worker)
+
+## How it works
+
+1. **Photo:** the phone scales the image down to at most 1568 px on the long edge and posts it to the
+   Pages Function `functions/api/recognize.js`.
+2. **Recognition:** the function asks Google Gemini (free tier) for the
+   position as eight rank strings using structured output. Models are tried in
+   order (3.6 Flash, 3 Flash Preview, 3.8 Flash); on 429/500/503/524 the next
+   one is used, since each has its own quota. A photo taken from Black's side
+   and read upside down is turned back by `orientByPawns`.
+3. **Review:** the recognised position is shown in the editor for correction.
+4. **Analysis:** Stockfish 19 (lite, single-threaded WASM) runs in a Web
+   Worker behind a small UCI wrapper (`public/js/engine.js`). The
+   single-threaded build needs no cross-origin isolation, so it also runs on iOS.
+
+The function is protected by an access code (`x-access-code` header) so the
+free quota is not used by others. Without `GEMINI_API_KEY` recognition answers
+503, but the board can still be set up by hand and analysed.
+
+| Path | Contents |
 |---|---|
-| `public/` | Statische PWA, Vanilla-ES-Module ohne Build |
-| `public/js/position.js` | Brettmodell, FEN, Plausibilitätsprüfung, Ausrichtung |
-| `public/js/engine.js` | UCI-Wrapper um den Stockfish-Worker |
-| `functions/api/recognize.js` | Pages Function: Zugangscode, Gemini-Aufruf, Validierung |
-| `tests/` | `node:test` für Brettlogik, UCI-Parser und die Function (mit gemocktem `fetch`) |
-| `scripts/browser-check.mjs` | Smoke-Test in headless Chrome: Stellung bauen, analysieren, per Vorschlag, Drag & Drop und Antippen ziehen, Zurück, Spieler wechseln; prüft auch, dass nichts scrollt (`VIEWPORT=375x667` für kleine Handys) |
+| `public/` | Static PWA, vanilla ES modules, no build step |
+| `public/js/position.js` | Board model, FEN, plausibility checks, orientation |
+| `public/js/engine.js` | UCI wrapper around the Stockfish worker |
+| `functions/api/recognize.js` | Pages Function: access code, Gemini call, validation |
+| `tests/` | `node:test` unit tests for board logic, UCI wrapper and the function (mocked `fetch` and worker) |
+| `scripts/browser-check.mjs` | Headless Chrome smoke test of the full UI flow |
 
-## Entwickeln
+## Privacy
 
-Voraussetzung: Node 24.
+Move analysis runs entirely on the device. Recognition uploads the photo to
+Google Gemini via the Pages Function; on the free tier Google may use uploaded
+images to improve its models. Nothing is stored by the app's server.
 
-    npm install
-    cp .dev.vars.example .dev.vars    # GEMINI_API_KEY und ACCESS_CODE eintragen
-    npm run dev                       # http://localhost:8793
-    npm run check                     # Biome (Lint + Format) und Tests
-    npm run lint:fix                  # Biome-Fixes anwenden
-    node scripts/browser-check.mjs    # gegen den laufenden Dev-Server
+## Development
+
+Requires Node 24.
+
+```sh
+npm install
+cp .dev.vars.example .dev.vars    # fill in GEMINI_API_KEY and ACCESS_CODE
+npm run dev                       # http://localhost:8793
+npm run check                     # Biome lint/format + unit tests
+npm test                          # unit tests only
+npm run lint:fix                  # apply Biome fixes
+node scripts/browser-check.mjs    # smoke test against the dev server (needs google-chrome)
+```
+
+`node scripts/browser-check.mjs https://schachfoto.pages.dev` runs the smoke
+test against the deployed site; `VIEWPORT=375x667` simulates a small phone.
+
+When changing frontend files, bump `VERSION` in `public/sw.js`.
 
 ## Deployment
 
-Jeder Push auf `main` läuft durch die GitHub Action `CI` (Lint und Tests) und
-geht danach auf Cloudflare Pages, sofern das Repo-Secret
-`CLOUDFLARE_API_TOKEN` gesetzt ist. Von Hand geht es mit `npm run deploy`.
+Every push to `main` runs the `CI` workflow (lint and tests). If that passes,
+the `deploy` job publishes `public/` to Cloudflare Pages, provided the
+repository secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`
+are set. Manual deploy: `npm run deploy`.
 
-Die Secrets der Pages-Funktion werden in einem echten Terminal gesetzt, nicht
-über eine Pipe ohne TTY, sonst landet ein leerer Wert:
+The function's secrets are set from an interactive terminal (a pipe without a
+TTY stores an empty value):
 
-    npx wrangler pages secret put GEMINI_API_KEY --project-name schachfoto
-    npx wrangler pages secret put ACCESS_CODE --project-name schachfoto
+```sh
+npx wrangler pages secret put GEMINI_API_KEY --project-name schachfoto
+npx wrangler pages secret put ACCESS_CODE --project-name schachfoto
+```
 
-Ohne `GEMINI_API_KEY` antwortet die Erkennung mit 503, das Brett lässt sich
-aber weiterhin von Hand aufbauen und analysieren. `ACCESS_CODE` schützt das
-Gratis-Kontingent vor fremden Aufrufen.
+## License
 
-## Lizenz
+The project's own code is licensed under the [MIT License](LICENSE).
+Bundled third-party files keep their licenses:
 
-Der eigene Code steht unter der [MIT-Lizenz](LICENSE). Mitgelieferte Dateien
-behalten ihre Lizenzen:
-
-- [Stockfish](https://github.com/official-stockfish/Stockfish) in der
-  WASM-Fassung von [stockfish.js](https://github.com/nmrugg/stockfish.js):
-  GPLv3, siehe `public/vendor/STOCKFISH-COPYING.txt`
-- [chess.js](https://github.com/jhlywa/chess.js): BSD-2-Clause, siehe
+- [Stockfish](https://github.com/official-stockfish/Stockfish), WASM build by
+  [stockfish.js](https://github.com/nmrugg/stockfish.js): GPLv3, see
+  `public/vendor/STOCKFISH-COPYING.txt`
+- [chess.js](https://github.com/jhlywa/chess.js): BSD-2-Clause, see
   `public/vendor/CHESSJS-LICENSE.txt`
-- Figurensatz „cburnett“ von Colin M.L. Burnett: CC BY-SA 3.0
+- Piece set "cburnett" by Colin M.L. Burnett (`public/pieces/`): CC BY-SA 3.0
