@@ -111,3 +111,46 @@ test('rejects malformed ranks from the model', async () => {
   const res = await onRequestPost({ request: request(), env });
   assert.equal(res.status, 502);
 });
+
+test('rejects images over the size limit', async () => {
+  const res = await onRequestPost({
+    request: request({ image: 'A'.repeat(8 * 1024 * 1024), mediaType: 'image/png' }),
+    env,
+  });
+  assert.equal(res.status, 413);
+});
+
+test('reports overload when every model answers 503', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response('busy', { status: 503 });
+  };
+  const res = await onRequestPost({ request: request(), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 3);
+});
+
+test('does not retry on a non-transient API error', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response('bad request', { status: 400 });
+  };
+  const res = await onRequestPost({ request: request(), env });
+  assert.equal(res.status, 502);
+  assert.equal(calls, 1);
+});
+
+test('reports an aborted generation', async () => {
+  globalThis.fetch = async () => Response.json({ candidates: [{ finishReason: 'SAFETY' }] });
+  const res = await onRequestPost({ request: request(), env });
+  assert.equal(res.status, 502);
+});
+
+test('reports an answer that is not JSON', async () => {
+  globalThis.fetch = async () =>
+    Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'no json' }] } }] });
+  const res = await onRequestPost({ request: request(), env });
+  assert.equal(res.status, 502);
+});
