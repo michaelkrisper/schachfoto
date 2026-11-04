@@ -3,6 +3,7 @@
 Photograph a chess board, get the position recognised, and see the best moves.
 
 [![CI](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml)
+[![Node 26](https://img.shields.io/badge/node-26-339933)](.nvmrc)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-schachfoto.pages.dev-2ea44f)](https://schachfoto.pages.dev)
 
@@ -61,7 +62,7 @@ images to improve its models. Nothing is stored by the app's server.
 
 ## Development
 
-Requires Node 24.
+Requires Node 26 (see `.nvmrc`).
 
 ```sh
 npm install
