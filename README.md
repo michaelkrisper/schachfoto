@@ -3,6 +3,7 @@
 Photograph a chess board, get the position recognised, and see the best moves.
 
 [![CI](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml/badge.svg)](https://github.com/michaelkrisper/schachfoto/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/github/v/tag/michaelkrisper/schachfoto?sort=semver&label=version)](https://github.com/michaelkrisper/schachfoto/releases)
 [![Node 26](https://img.shields.io/badge/node-26-339933)](.nvmrc)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-schachfoto.pages.dev-2ea44f)](https://schachfoto.pages.dev)
@@ -86,6 +87,10 @@ the `deploy` job publishes `public/` to Cloudflare Pages, provided the
 repository secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`
 are set. Manual deploy: `npm run deploy`.
 
+Every merge to `main` is tagged with the next patch version, and only tagged
+commits are deployed; bundled releases with release notes come from the
+Release workflow (see [CONTRIBUTING](CONTRIBUTING.md#versions-and-releases)).
+
 The function's secrets are set from an interactive terminal (a pipe without a
 TTY stores an empty value):
 
@@ -93,6 +98,10 @@ TTY stores an empty value):
 npx wrangler pages secret put GEMINI_API_KEY --project-name schachfoto
 npx wrangler pages secret put ACCESS_CODE --project-name schachfoto
 ```
+
+## Contributing
+
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
