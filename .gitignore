@@ -5,3 +5,4 @@ dist/
 backups/
 .DS_Store
 *.log
+CLAUDE.local.md
