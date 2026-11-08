@@ -78,14 +78,17 @@ node scripts/browser-check.mjs    # smoke test against the dev server (needs goo
 `node scripts/browser-check.mjs https://schachfoto.pages.dev` runs the smoke
 test against the deployed site; `VIEWPORT=375x667` simulates a small phone.
 
-When changing frontend files, bump `VERSION` in `public/sw.js`.
+The service worker's cache names carry a content hash of their files, stamped
+on deploy by `scripts/stamp-sw.mjs`; there is no version to bump. The app shell
+and the vendor files (engine) are cached separately, so an app update does not
+download the engine again.
 
 ## Deployment
 
 Every push to `main` runs the `CI` workflow (lint and tests). If that passes,
 the `deploy` job publishes `public/` to Cloudflare Pages, provided the
 repository secret `CLOUDFLARE_API_TOKEN` and variable `CLOUDFLARE_ACCOUNT_ID`
-are set. Manual deploy: `npm run deploy`.
+are set. Manual deploy: `npm run deploy` (stamps a copy in `dist/`).
 
 Every merge to `main` is tagged with the next patch version, and only tagged
 commits are deployed; bundled releases with release notes come from the

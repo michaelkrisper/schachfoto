@@ -39,6 +39,8 @@ jobs:
           cache: npm
       # The wrangler action then uses the version pinned in package-lock.json.
       - run: npm ci
+      # The service worker's cache names get a content hash of their files.
+      - run: node scripts/stamp-sw.mjs public
 
       # Without a token the deploy is skipped cleanly instead of failing.
       - id: guard

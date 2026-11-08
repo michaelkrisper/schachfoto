@@ -33,6 +33,8 @@ npm run dev                       # http://localhost:8793
 npm run check                     # Biome lint/format + unit tests, as in CI
 ```
 
-When changing frontend files, bump `VERSION` in `public/sw.js`. Commit
-messages, comments and identifiers in English; the user interface stays
-German.
+The service worker's cache names are stamped with a content hash on deploy
+(`scripts/stamp-sw.mjs`), so there is nothing to bump. A new file the app
+needs offline goes into `SHELL` in `public/sw.js`, or into `ASSETS` if it is a
+vendor file. Commit messages, comments and identifiers in English; the user
+interface stays German.
